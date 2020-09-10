@@ -4,6 +4,7 @@ __pycache__/
 **/settings.josn
 *.py[cod]
 *$py.class
+**/static/
 
 # C extensions
 *.so

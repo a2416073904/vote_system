@@ -16,56 +16,48 @@ logger = logging.getLogger(__name__)
 def test(request):
     return render(request, 'test.html', {})
 
-# Query all questions with status 1 
+# show questionList list
 def index(request):
-    problems = list(models.Problem.objects.filter(problem_state=1))
+    questionLists = list(models.QuestionList.objects.all())
 
-    logger.info(*problems)
-
-    problems = serializers.serialize("json", problems)
+    questionLists = serializers.serialize("json", questionLists)
     data = {
-        'problems': problems
+        'questionLists': questionLists
     }
-    return JsonResponse(data)
+    return render(request, 'index.html', data)
 
-# manager page
-def manage(request):
-    problems = list(models.Problem.objects.all())
 
-    logger.info(*problems)
+def question_list_detail(request, qid):
+    question_list = models.QuestionList.objects.get(qid)
+    question_problem = models.QuestionProblem.objects.get()
 
-    problems = serializers.serialize("json", problems)
-    data = {
-        'problems': problems
-    }
-    return JsonResponse(data)
-
+    problmes = list()
+    
 
 # add problem
 def add_problem(request):
-    problem = models.Problem(description='你喜欢什么水果？', end_time='2020-09-22 16:00:00', problem_type = 0, problem_state=1)
-    if problem is not None:
-        problem.save()
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        problem_type = request.POST.get('type')
+        options = request.POST.get('options')
+    
+    problem = models.Problem(description = description, problem_type = problem_type)
+    problem.save()
 
 
     logger.info(problem.pid)
-    option1 = models.Option(problem_ofield = problem, option = '苹果')
-    option2 = models.Option(problem_ofield = problem, option = '香蕉')
-    option3 = models.Option(problem_ofield = problem, option = '梨子')
-    options = [option1, option2, option3]
-
-    
-
-    if options is not None:
-        for x in options:
-            x.save()
+    for option in options:
+        models.Option(problem = problem, option = option)
 
     logger.info(problem)
     logger.info(*options)
     return HttpResponse('问题：{0}\n添加成功'.format(problem.description))
 
 # edit problem
-def edit_problem(request, pid):
+def edit_problem(request):
+    if request.method == 'POST':
+        pid = request.POST.get('pid')
+
     problem = models.Problem.objects.get(pid = pid)
     problem.end_time = '2020-09-22 20:00:00'
     problem.save()
@@ -74,14 +66,20 @@ def edit_problem(request, pid):
     return HttpResponse('问题{0}修改成功'.format(problem.pid))
 
 # delete problem
-def delete_problem(request, pid):
+def delete_problem(request):
+    if request.method == 'POST':
+        pid = request.POST.get('pid')
     problem = models.Problem.objects.get(pid = pid)
     problem.delete()
     
     return HttpResponse('问题{0}删除成功'.format(pid))
 
 # vote 
-def user_vote(request, pid, oid, content):
+def user_vote(request):
+    if request.method == 'POST':
+        pid = request.POST.get('pid')
+        oid = request.POST.get('oid')
+        content = request.POST.get('content')
     
     uid = str(uuid.uuid4())
     suid = ''.join(uid.split('-'))
@@ -89,3 +87,4 @@ def user_vote(request, pid, oid, content):
     vote.save()
 
     return HttpResponse('{0}投票问题{1}成功'.format(suid, pid))
+

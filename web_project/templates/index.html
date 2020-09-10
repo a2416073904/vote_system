@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+</head>
+<body>
+    <div class="nav">
+        <div class="war">
+            <div class="logo_bar"></div>
+            <div class="operation_bar"></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="content">
+            <div class="top">
+                <div class="title">问卷列表</div>
+                <div class="select">
+                    <div class="time_box"><span>时间排序</span><i></i></div>
+                    <div class="state_box"><span>状态</span><i></i></div>
+                </div>
+            </div>
+            <div class="center">
+                <div class="survey-list" id="ctl01_ContentPlaceHolder1_qls">
+                    <dl class="survey-items" style="z-index:100;position:relative">
+                        <dt class="item-top">
+                            <div class="pull-left"><a title="喜欢的水果" class="pull-left item-tit"
+                                    href="#" target="_blank">喜欢的水果</a></div>
+                            <div class="pull-right">
+                                <div class="pull-left item-id">ID:90431930</div>
+                                <div class="pull-left item-draft"><i class="nopublic"></i>未发布</div>
+                                <div class="pull-left item-sheet">答卷:<a class="runing-num" href="javascript:void(0);">0</a></div>
+                                <div class="pull-left item-data">9月08日 14:29</div>
+                            </div>
+                        </dt>
+                        <dd class="item-bot">
+                            <div class="process-box pull-left">
+                                <dl class="process-1 pull-left">
+                                    <dd class="spinner-list"><a href="#"><i
+                                                class="icon design-icon"></i>设计问卷<i class="index_iconfont"></i></a>
+                                        <ul><span class="caret-inverted"></span>
+                                            <li><a title="编辑问卷" href="#">编辑问卷</a>
+                                            </li>
+                                            <li><a title="问卷设置" href="#">问卷设置</a>
+                                            </li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+                                <dl class="process-2 pull-left">
+                                    <dd class="spinner-list"><a href="#"><i
+                                                class="icon recovery-icon"></i>发送问卷<i class="index_iconfont"></i></a>
+                                        <ul><span class="caret-inverted"></span>
+                                            <li><a title="通过QQ、MSN、Email发送给受访者"
+                                                    href="#">链接&amp;二维码</a></li>
+                                            <li><a title="微信发送" href="#">微信发送</a></li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="operation-box pull-right"><a title="此问卷状态是草稿，点击发布问卷" class="pull-left release-items"
+                                    onclick='return statusChange(90431930,"",-1);' href="javascript:void(0);"><i
+                                        class="index_iconfont"></i><span class="vam">发布</span></a><span class="splitline"></span>
+                                        <a title="删除此问卷"
+                                    class="fl control-items" onclick="deleteClick(90431930);" href="javascript:void(0)"><i
+                                        class="index_iconfont fs18"></i><span class="vam">删除</span></a> 
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="side">
+            <div class="function_box">
+                <div class="add_questions"></div>
+                <ul class="functions">
+                    <li class="func">全部问卷</li>
+                    <li class="func">文件夹</li>
+                    <li class="func">回收站</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="foot"></div>
+</body>
+</html>

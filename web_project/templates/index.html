@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Index</title>
+
+    <link type="text/css" rel="">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
 </head>
 <body>
     <div class="nav">
@@ -12,7 +17,7 @@
             <div class="operation_bar"></div>
         </div>
     </div>
-    <div class="container">
+    <div id="app" class="container">
         <div class="content">
             <div class="top">
                 <div class="title">问卷列表</div>
@@ -23,15 +28,15 @@
             </div>
             <div class="center">
                 <div class="survey-list" id="ctl01_ContentPlaceHolder1_qls">
-                    <dl class="survey-items" style="z-index:100;position:relative">
+                    <dl class="survey-items" style="z-index:100;position:relative" v-for="question in questions">
                         <dt class="item-top">
-                            <div class="pull-left"><a title="喜欢的水果" class="pull-left item-tit"
-                                    href="#" target="_blank">喜欢的水果</a></div>
+                            <div class="pull-left"><a title=""  class="pull-left item-tit"
+                                    href="qustions_datile/1" target="_blank">[[question.fields.question_title]]</a></div>
                             <div class="pull-right">
-                                <div class="pull-left item-id">ID:90431930</div>
+                                <div class="pull-left item-id">ID: [[question.pk]]</div>
                                 <div class="pull-left item-draft"><i class="nopublic"></i>未发布</div>
-                                <div class="pull-left item-sheet">答卷:<a class="runing-num" href="javascript:void(0);">0</a></div>
-                                <div class="pull-left item-data">9月08日 14:29</div>
+                                <div class="pull-left item-sheet">答卷:<a class="runing-num" href="javascript:void(0);">[[question.fields.answer_num]]</a></div>
+                                <div class="pull-left item-data">[[question.creat_time]]</div>
                             </div>
                         </dt>
                         <dd class="item-bot">
@@ -59,10 +64,10 @@
                                 </dl>
                             </div>
                             <div class="operation-box pull-right"><a title="此问卷状态是草稿，点击发布问卷" class="pull-left release-items"
-                                    onclick='return statusChange(90431930,"",-1);' href="javascript:void(0);"><i
+                                    onclick='return statusChange([[question.qid]],"",-1);' href="javascript:void(0);"><i
                                         class="index_iconfont"></i><span class="vam">发布</span></a><span class="splitline"></span>
                                         <a title="删除此问卷"
-                                    class="fl control-items" onclick="deleteClick(90431930);" href="javascript:void(0)"><i
+                                    class="fl control-items" onclick="deleteClick([[question.qid]]);" href="javascript:void(0)"><i
                                         class="index_iconfont fs18"></i><span class="vam">删除</span></a> 
                         </dd>
                     </dl>
@@ -82,4 +87,31 @@
     </div>
     <div class="foot"></div>
 </body>
+
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        delimiters: ["[[", "]]"],
+        data: {
+            questions: []
+        },
+
+
+        mounted: function(){
+            this.fetchData();
+        },
+
+        methods: {
+            fetchData(){
+                axios.get('/vote/api/questions_lists/').then(response=>{
+                    this.questions = response.data
+                    console.log(this.questions)
+                }), err=>{
+                    console.log(err);
+                };
+            }
+        }
+    });
+
+</script>
 </html>

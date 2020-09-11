@@ -16,22 +16,38 @@ logger = logging.getLogger(__name__)
 def test(request):
     return render(request, 'test.html', {})
 
-# show questionList list
+# show questionList page
 def index(request):
+    return render(request, 'index.html')
+
+
+# show questionsList datail page
+def qustions_datile(request, qid):
+    return render(request, 'questionsDatile.html')
+
+
+
+def questions_lists(request):
     questionLists = list(models.QuestionList.objects.all())
 
     questionLists = serializers.serialize("json", questionLists)
-    data = {
-        'questionLists': questionLists
-    }
-    return render(request, 'index.html', data)
 
+    logger.info(questionLists)
 
+    return HttpResponse(questionLists)
+
+# 
 def question_list_detail(request, qid):
-    question_list = models.QuestionList.objects.get(qid)
-    question_problem = models.QuestionProblem.objects.get()
+    questionList = models.QuestionList.objects.get(qid = qid)
+    question_problems = models.QuestionProblem.objects.filter(QuestionList__id=qid)  #h获取问卷关联问题ID
+    problems = list()
+    for x in question_problems:
+        list.append(x.problem)
+    
+    questionList = serializers.serialize("json", questionList)
+    problems = serializers.serialize("json", problems)
 
-    problmes = list()
+    return HttpResponse(problems)
     
 
 # add problem
@@ -55,7 +71,7 @@ def add_problem(request):
 
 # edit problem
 def edit_problem(request):
-    if request.method == 'POST':
+    if request.method == 'PUT':
         pid = request.POST.get('pid')
 
     problem = models.Problem.objects.get(pid = pid)
@@ -67,7 +83,7 @@ def edit_problem(request):
 
 # delete problem
 def delete_problem(request):
-    if request.method == 'POST':
+    if request.method == 'DELEDE':
         pid = request.POST.get('pid')
     problem = models.Problem.objects.get(pid = pid)
     problem.delete()

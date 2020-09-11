@@ -34,15 +34,16 @@ class Vote(models.Model):
 
 class  QuestionList(models.Model):
     qid = models.AutoField(primary_key=True)  # 问卷ID
+    question_title = models.CharField(max_length = 12)  # 问卷标题
     create_time = models.DateTimeField(auto_now=False, auto_now_add=True)  # 问卷创建时间
-    start_time = models.DateTimeField(auto_now=False, auto_now_add=True) # 设置开始时间
-    end_time = models.DateTimeField(auto_now=False, auto_now_add=True)  # 设置结束时间
+    start_time = models.DateTimeField(auto_now=False, auto_now_add=False, null=True) # 设置开始时间
+    end_time = models.DateTimeField(auto_now=False, auto_now_add=False, null=True)  # 设置结束时间
     answer_num = models.IntegerField()  # 答卷数量
     state = models.IntegerField()  # 设置问卷状态 0：草稿 1：发布 2：结束
 
     def __str__(self):
-        return '<QuestionList:{{ qid={0}, create_time={1}, start_time={2}, end_time={3}, answer_num={4}, state={4} }}>\n'.format(self.qid, self.create_time,
-        self.start_time, self.end_time, self.answer_num, self.state)
+        return '<QuestionList:{{ qid={0}, question_title={1} create_time={2}, start_time={3}, end_time={4}, answer_num={5}, state={6} }}>\n'.format(self.qid,
+        self.question_title, self.create_time, self.start_time, self.end_time, self.answer_num, self.state)
 
 class QuestionProblem(models.Model):
     id = models.AutoField(primary_key=True)  # 问卷列表与问题关联表ID

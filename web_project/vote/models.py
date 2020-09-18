@@ -8,8 +8,7 @@ class Problem(models.Model):
     problem_type = models.IntegerField()  # 设置问题类型 0:单选 1：多选 2：问答
     
     def __str__(self):  # 重写直接输出类的方法
-        return '<Problem:{{pid={0}, description={1}, create_time={2}, end_time={3}, problem_type={4}, \
-        problem_state={5} }}>\n'.format(self.pid, self.description, self.create_time, self.end_time, self.problem_type, self.problem_state)
+        return '<Problem:{{pid={0}, description={1}, problem_type={2} }}>\n'.format(self.pid, self.description, self.problem_type)
 
 
 class Option(models.Model):
@@ -18,7 +17,7 @@ class Option(models.Model):
     option = models.CharField(max_length=50, null=True) # 设置选项内容
 
     def __str__(self):
-        return '<Option:{{ oid={0}, pid={1}, option={2} }}>\n'.format(self.oid, self.pid, self.option)
+        return '<Option:{{ oid={0}, problem={1}, option={2} }}>\n'.format(self.oid, self.problem, self.option)
         
 
 class Vote(models.Model):
@@ -29,8 +28,8 @@ class Vote(models.Model):
     content = models.CharField(max_length=300, null=True) # 设置问题回答内容（仅问答题有，其余时候为空）
 
     def __str__(self):
-        return '<Vote:{{ vid={0}, uid={1}, pid={2}, oid={3}, content={4} }}>\n'.format(self.vid, self.uid, self.pid, 
-        self.oid, self.content)
+        return '<Vote:{{ vid={0}, uid={1}, problem={2}, option={3}, content={4} }}>\n'.format(self.vid, self.uid, self.problem, 
+        self.option, self.content)
 
 class  QuestionList(models.Model):
     qid = models.AutoField(primary_key=True)  # 问卷ID
@@ -51,7 +50,7 @@ class QuestionProblem(models.Model):
     question_list = models.ForeignKey("QuestionList", on_delete=models.CASCADE)  # 关联问卷
 
     def __str__(self):
-        return '<QuestionProblem:{{ id={0}, problem={1}, question_list={2}}}>\n'.format(self.id, self.problem, self.question_list)
+        return '<QuestionProblem:{{ id={0}, problem={1}, question_list={2} }}>\n'.format(self.id, self.problem, self.question_list)
 
 
 

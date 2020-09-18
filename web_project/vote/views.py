@@ -22,8 +22,8 @@ def index(request):
 
 
 # show questionsList datail page
-def qustions_datile(request, qid):
-    return render(request, 'questionsDatile.html')
+def qustions_detail(request, qid):
+    return render(request, 'questionsDetail.html')
 
 
 
@@ -39,15 +39,31 @@ def questions_lists(request):
 # 
 def question_list_detail(request, qid):
     questionList = models.QuestionList.objects.get(qid = qid)
-    question_problems = models.QuestionProblem.objects.filter(QuestionList__id=qid)  #h获取问卷关联问题ID
-    problems = list()
-    for x in question_problems:
-        list.append(x.problem)
+    question_problems = questionList.questionproblem_set.all()  #h获取问卷关联问题ID
     
-    questionList = serializers.serialize("json", questionList)
-    problems = serializers.serialize("json", problems)
+    result = {}
+    problems = []
+    problem_options = []
+    for x in question_problems:
+        p = models.Problem.objects.get(pid = x.problem.pid)
+        tmep_list = p.option_set.all()
+        logger.info(tmep_list)
+        temp_dict = {}
+        for o in tmep_list:
+            logger.info(o)
+            o.__dict__.pop("_state")
+            temp_dict["problem_option"+ str(o.oid)] = o.__dict__
+        problem_options.append(temp_dict)
 
-    return HttpResponse(problems)
+        x.problem.__dict__.pop("_state")
+        problems.append(x.problem.__dict__)
+
+    result['problems'] = problems
+    questionList.__dict__.pop("_state")
+    result['questionList'] = questionList.__dict__
+    result['problem_options'] = problem_options
+
+    return JsonResponse(result, safe=False)
     
 
 # add problem

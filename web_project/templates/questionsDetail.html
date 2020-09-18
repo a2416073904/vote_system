@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuestionsDatile</title>
+
+  <link rel="stylesheet" href="/static/vote/css/detail.css">
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="side">
+      <div class="function-box">
+        <a href="../" class="func">返回</a>
+        <a href="#" class="func select">设计问卷</a>
+        <a href="#" class="func">发送问卷</a>
+        <a href="#" class="func">分析下载</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="nav">
+        <h2 class="queation-select">[[questionList.question_title]](ID:[[questionList.qid]])</h2>
+        <div class="operation-bar">
+          <div class="operation one" v-on:click.stop="addProblem(problem_type)">添加单选题</div>
+          <div class="operation more" v-on:click.stop="addProblem(problem_type)">添加多选题</div>
+          <div class="operation answer" v-on:click.stop="addProblem(problem_type)">添加问答题</div>
+          <div class="operation">问卷设置</div>
+        </div>
+      </div>
+      <div class="question-list">
+        <ul class="problem-box" v-for="(problem,index) in problems">
+          <li class="problem">
+            <h2 >[[problem.description]]</h2>
+            <div class="options" v-for="(option,index) in problem_options[index]">
+              <input type="radio" class="option" v-bind:value="option.option"><span>[[option.option]]</span>
+            </div>
+            <input type="button" class="btn btn-edit" value="编辑">
+            <input type="button" class="btn btn-delete" value="删除">
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="model" v-show="showModel"></div>
+    <div class="add-model" v-show="showAddModel">
+      <h2>问题录入：</h2>
+      <textarea class="problem-text" rows="25" cols="68" placeholder=
+      "你喜欢的水果?
+      苹果
+      梨子
+      香蕉"></textarea>
+      <div class="btns">
+        <input type="button" value="保存">
+        <input type="button" value="关闭">
+      </div>
+    </div>
+    
+  </div>
+    
+</body>
+
+
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        delimiters: ["[[", "]]"],
+        data: {
+          problems: [],
+          questionList: "",
+          problem_options: [],
+          problem_type : 0,
+          showAddModel: false,
+          showModel: false
+        },
+
+
+        mounted: function () {
+          this.fetchData();
+        },
+
+        methods: {
+          fetchData() {
+            axios.get('/vote/api/question_list_detail/2/').then(response => {
+              this.problems = response.data.problems;
+              this.questionList = response.data.questionList;
+              this.problem_options = response.data.problem_options;
+              console.log(this.problems);
+              console.log(this.questionList);
+              console.log(this.problem_options);
+            }), err => {
+              console.log(err);
+            };
+          },
+
+          addProblem: function(problem_type, event){
+            this.problem_type = problem_type;
+            this.showAddModel = true;
+            this.showModel = true;
+          }
+
+        }
+      });
+
+</script>
+</html>

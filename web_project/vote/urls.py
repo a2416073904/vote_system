@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     # page
     path('', views.index, name="index"),
-    path('qustions_datile/<qid>', views.qustions_datile),
+    path('qustions_detail/<qid>', views.qustions_detail),
 
 
     # data

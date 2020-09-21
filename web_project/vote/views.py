@@ -6,6 +6,7 @@ import uuid
 from django.http import JsonResponse
 import json
 from django.core import serializers
+from django.template.context_processors import csrf
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -25,6 +26,12 @@ def index(request):
 def qustions_detail(request, qid):
     return render(request, 'questionsDetail.html')
 
+
+# def get_csrf(request):
+#         #生成 csrf 数据，发送给前端
+#     x = csrf(request)
+#     csrf_token = x['csrf_token']
+#     return HttpResponse('{} ; {}'.format(str(re), csrf_token))
 
 
 def questions_lists(request):
@@ -68,26 +75,33 @@ def question_list_detail(request, qid):
 
 # add problem
 def add_problem(request):
-    if request.method == 'POST':
-        description = request.POST.get('description')
-        problem_type = request.POST.get('type')
-        options = request.POST.get('options')
+    if request.method != 'PUT':
+        return HttpResponse('403')
     
-    problem = models.Problem(description = description, problem_type = problem_type)
-    problem.save()
+    logger.info(request.POST)
+    data = request.POST.get('notedata')
+    problem_type = request.POST.get('problem_type')
+    logger.info(problem_type)
+    logger.info(data)
 
-
-    logger.info(problem.pid)
-    for option in options:
-        models.Option(problem = problem, option = option)
-
+    problem_options = data.split('\n\n')
+    
+    for x in problem_options:
+        problem_option = x.split('\n')
+        problem = models.Problem(description=problem_option[0], problem_type=problem_type)
+        problem.save()
+        
+        for i in range(1, len(problem_option)):
+            models.Option(problem = problem, option = problem_option[i])
+    
+    logger.info(problem.pid)  
     logger.info(problem)
-    logger.info(*options)
+
     return HttpResponse('问题：{0}\n添加成功'.format(problem.description))
 
 # edit problem
 def edit_problem(request):
-    if request.method == 'PUT':
+    if request.method == 'POST':
         pid = request.POST.get('pid')
 
     problem = models.Problem.objects.get(pid = pid)
@@ -108,7 +122,7 @@ def delete_problem(request):
 
 # vote 
 def user_vote(request):
-    if request.method == 'POST':
+    if request.method == 'PUT':
         pid = request.POST.get('pid')
         oid = request.POST.get('oid')
         content = request.POST.get('content')

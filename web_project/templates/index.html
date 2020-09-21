@@ -31,7 +31,7 @@
                     <dl class="survey-items" style="z-index:100;position:relative" v-for="question in questions">
                         <dt class="item-top">
                             <div class="pull-left"><a title=""  class="pull-left item-tit"
-                                    href="qustions_datile/1">[[question.fields.question_title]]</a></div>
+                                    href="#" v-bind:href="'vote/qustions_detail/'+ question.pk + '/'">[[question.fields.question_title]]</a></div>
                             <div class="pull-right">
                                 <div class="pull-left item-id">ID: [[question.pk]]</div>
                                 <div class="pull-left item-draft"><i class="nopublic"></i>未发布</div>

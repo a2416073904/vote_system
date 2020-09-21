@@ -9,6 +9,7 @@
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
 </head>
 <body>
   <div id="app">
@@ -25,9 +26,9 @@
       <div class="nav">
         <h2 class="queation-select">[[questionList.question_title]](ID:[[questionList.qid]])</h2>
         <div class="operation-bar">
-          <div class="operation one" v-on:click.stop="addProblem(problem_type)">添加单选题</div>
-          <div class="operation more" v-on:click.stop="addProblem(problem_type)">添加多选题</div>
-          <div class="operation answer" v-on:click.stop="addProblem(problem_type)">添加问答题</div>
+          <div class="operation one" v-on:click.stop="addProblem(0)">添加单选题</div>
+          <div class="operation more" v-on:click.stop="addProblem(1)">添加多选题</div>
+          <div class="operation answer" v-on:click.stop="addProblem(2)">添加问答题</div>
           <div class="operation">问卷设置</div>
         </div>
       </div>
@@ -38,24 +39,22 @@
             <div class="options" v-for="(option,index) in problem_options[index]">
               <input type="radio" class="option" v-bind:value="option.option"><span>[[option.option]]</span>
             </div>
-            <input type="button" class="btn btn-edit" value="编辑">
-            <input type="button" class="btn btn-delete" value="删除">
+            <input type="button" v-bind:pid="problem.pid" class="btn btn-edit" value="编辑">
+            <input type="button" v-bind:pid="problem.pid" class="btn btn-delete" value="删除">
           </li>
         </ul>
       </div>
     </div>
-
-    <div class="model" v-show="showModel"></div>
     <div class="add-model" v-show="showAddModel">
       <h2>问题录入：</h2>
       <textarea class="problem-text" rows="25" cols="68" placeholder=
       "你喜欢的水果?
       苹果
       梨子
-      香蕉"></textarea>
+      香蕉" v-model="notedata"></textarea>
       <div class="btns">
-        <input type="button" value="保存">
-        <input type="button" value="关闭">
+        <input type="button" v-on:click.stop="saveProblem()" value="保存">
+        <input type="button" v-on:click.stop="closeAddModel()" value="关闭">
       </div>
     </div>
     
@@ -64,17 +63,19 @@
 </body>
 
 
+
 <script type="text/javascript">
     var app = new Vue({
         el: '#app',
         delimiters: ["[[", "]]"],
         data: {
-          problems: [],
-          questionList: "",
-          problem_options: [],
-          problem_type : 0,
-          showAddModel: false,
-          showModel: false
+          problems: [],     //问卷问题
+          questionList: "",   //问卷信息
+          problem_options: [],  //问卷问题显示
+          problem_type : 0,   //添加问题type
+          showAddModel: false,  //添加问题model显示控制
+          notedata: null,
+          csrf_token: null,
         },
 
 
@@ -83,6 +84,7 @@
         },
 
         methods: {
+          // 获取问卷问题显示
           fetchData() {
             axios.get('/vote/api/question_list_detail/2/').then(response => {
               this.problems = response.data.problems;
@@ -96,10 +98,52 @@
             };
           },
 
+          //获取csrf
+          get_csrf(){
+            axios.get('/vote/api/get_csrf/').then(response => {
+              this.csrf_token = response.data
+            }), err => {
+              console.log(err);
+            };
+          },
+
+          //添加问题显示
           addProblem: function(problem_type, event){
             this.problem_type = problem_type;
             this.showAddModel = true;
-            this.showModel = true;
+          },
+
+          //closeAddModel
+          closeAddModel: function(event){
+            this.showAddModel = false;
+          },
+
+          
+
+          //提交问题
+          saveProblem: function(event){
+            this.showAddModel=false
+            console.log(this.notedata)
+            console.log(this.problem_type)
+            this.$http({
+              url: '/vote/api/problem/',
+              method: 'PUT',
+              // 请求体中发送的数据
+              data: {
+                notedata: this.notedata,
+                problem_type: this.problem_type,
+              },
+              // 设置请求头
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              }    
+            }).then(function (data) {
+              // 成功回调
+              console.log(data)
+            }, function (data) {
+              // 失败回调
+              console.log(data)
+            });
           }
 
         }

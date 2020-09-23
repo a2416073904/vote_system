@@ -33,7 +33,7 @@ def qustions_detail(request, qid):
 #     csrf_token = x['csrf_token']
 #     return HttpResponse('{} ; {}'.format(str(re), csrf_token))
 
-
+# select all questionList 
 def questions_lists(request):
     questionLists = list(models.QuestionList.objects.all())
 
@@ -43,7 +43,7 @@ def questions_lists(request):
 
     return HttpResponse(questionLists)
 
-# 
+# select questionList detail
 def question_list_detail(request, qid):
     questionList = models.QuestionList.objects.get(qid = qid)
     question_problems = questionList.questionproblem_set.all()  #h获取问卷关联问题ID
@@ -71,16 +71,39 @@ def question_list_detail(request, qid):
     result['problem_options'] = problem_options
 
     return JsonResponse(result, safe=False)
-    
+
+#select problem by id
+def getProblemById(request, pid):
+    if request.method != "GET":
+        return HttpResponse('403')
+
+    result = {}
+    problem_options = []
+
+    problem = models.Problem.objects.get(pid=pid)
+    tmep_list = problem.option_set.all()
+    logger.info(tmep_list) 
+    for o in tmep_list:
+        logger.info(o)
+        o.__dict__.pop("_state")
+        problem_options.append(o.__dict__)
+    problem.__dict__.pop("_state")
+    result['problem'] = problem.__dict__
+    result['problem_options'] = problem_options
+
+    return JsonResponse(result, safe=False)
+
 
 # add problem
 def add_problem(request):
     if request.method != 'PUT':
-        return HttpResponse('403')
+         return HttpResponse('403')
     
-    logger.info(request.POST)
-    data = request.POST.get('notedata')
-    problem_type = request.POST.get('problem_type')
+    logger.info(request.body)
+    
+    data = request.PUT.get('notedata')
+    problem_type = request.PUT.get('problem_type')
+    qid = request.PUT.get('qid')
     logger.info(problem_type)
     logger.info(data)
 
@@ -90,9 +113,13 @@ def add_problem(request):
         problem_option = x.split('\n')
         problem = models.Problem(description=problem_option[0], problem_type=problem_type)
         problem.save()
+        question_problem = models.QuestionProblem(problem=problem, question_list=models.QuestionList.objects.get(qid=qid))
+        question_problem.save()
         
         for i in range(1, len(problem_option)):
-            models.Option(problem = problem, option = problem_option[i])
+            if problem_option[i] != None and problem_option[i] != '':
+                option = models.Option(problem=problem, option=problem_option[i])
+                option.save()
     
     logger.info(problem.pid)  
     logger.info(problem)
@@ -101,20 +128,36 @@ def add_problem(request):
 
 # edit problem
 def edit_problem(request):
-    if request.method == 'POST':
-        pid = request.POST.get('pid')
+    if request.method != 'POST':
+        return HttpResponse('403')
 
-    problem = models.Problem.objects.get(pid = pid)
-    problem.end_time = '2020-09-22 20:00:00'
+    pid = request.POST.get("editProblem[pid]")
+    edit_options = request.POST.get('editOptions')
+
+    problem = models.Problem.objects.get(pid=pid)
+    problem.description = request.POST.get("editProblem[description]")
+    
     problem.save()
+
+    count = 0
+    for x in edit_options:
+        option = models.Option.objects.get(oid=x.oid)
+        if x.option == None or x.option == "":
+            option.delete
+        else:
+            option.option = x.option
+            option.save()
+        count += 1
 
     logger.info(problem)
     return HttpResponse('问题{0}修改成功'.format(problem.pid))
 
 # delete problem
-def delete_problem(request):
-    if request.method == 'DELEDE':
-        pid = request.POST.get('pid')
+def delete_problem(request, pid):
+    if request.method != 'DELETE':
+        return HttpResponse('403')
+
+    pid2 = request.GET.get('pid')
     problem = models.Problem.objects.get(pid = pid)
     problem.delete()
     

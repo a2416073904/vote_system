@@ -10,12 +10,14 @@
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qs/6.9.4/qs.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue-router/3.4.3/vue-router.min.js"></script>
 </head>
 <body>
   <div id="app">
     <div class="side">
       <div class="function-box">
-        <a href="../" class="func">返回</a>
+        <a href="/../" class="func">返回</a>
         <a href="#" class="func select">设计问卷</a>
         <a href="#" class="func">发送问卷</a>
         <a href="#" class="func">分析下载</a>
@@ -26,9 +28,9 @@
       <div class="nav">
         <h2 class="queation-select">[[questionList.question_title]](ID:[[questionList.qid]])</h2>
         <div class="operation-bar">
-          <div class="operation one" v-on:click.stop="addProblem(0)">添加单选题</div>
-          <div class="operation more" v-on:click.stop="addProblem(1)">添加多选题</div>
-          <div class="operation answer" v-on:click.stop="addProblem(2)">添加问答题</div>
+          <div class="operation one" v-on:click.stop="addShow(0)">添加单选题</div>
+          <div class="operation more" v-on:click.stop="addShow(1)">添加多选题</div>
+          <div class="operation answer" v-on:click.stop="addShow(2)">添加问答题</div>
           <div class="operation">问卷设置</div>
         </div>
       </div>
@@ -39,15 +41,15 @@
             <div class="options" v-for="(option,index) in problem_options[index]">
               <input type="radio" class="option" v-bind:value="option.option"><span>[[option.option]]</span>
             </div>
-            <input type="button" v-bind:pid="problem.pid" class="btn btn-edit" value="编辑">
-            <input type="button" v-bind:pid="problem.pid" class="btn btn-delete" value="删除">
+            <input type="button" v-on:click.stop="editShow(problem.pid, problem.problem_type)" class="btn btn-edit" value="编辑">
+            <input type="button"  v-on:click.stop="deleteProblem(problem.pid)" class="btn btn-delete" value="删除">
           </li>
         </ul>
       </div>
     </div>
     <div class="add-model" v-show="showAddModel">
-      <h2>问题录入：</h2>
-      <textarea class="problem-text" rows="25" cols="68" placeholder=
+      <h2>{{modelTitle}}：</h2>
+      <textarea class="problem-text pre-line" rows="25" cols="68" placeholder=
       "你喜欢的水果?
       苹果
       梨子
@@ -57,6 +59,26 @@
         <input type="button" v-on:click.stop="closeAddModel()" value="关闭">
       </div>
     </div>
+
+    <div class="add-model" v-show="showEditModel">
+      <h2>{{modelTitle}}：</h2>
+      <div class="edit">
+          <div>
+            <span>问题描述：</span>
+            <input type="text" class="problem-title" v-model="editProblem.description">
+          </div>
+          <div v-if="editProblem.problem_type != 2" v-for="(option, index) in editOptions">
+            <span>选项：</span>
+            <input type="text" class="problem-option" v-model="option.option" >
+          </div>    
+          
+      </div>
+      <div class="btns">
+        <input type="button" v-on:click.stop="saveProblem()" value="保存">
+        <input type="button" v-on:click.stop="closeAddModel()" value="关闭">
+      </div>
+    </div>
+
     
   </div>
     
@@ -65,89 +87,175 @@
 
 
 <script type="text/javascript">
+    var qs = Qs;
+    axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+    Vue.use(VueRouter)
+    const router = new VueRouter({
+        mode: "history", // 默认使用hash模式，url会出现#
+    });
     var app = new Vue({
-        el: '#app',
-        delimiters: ["[[", "]]"],
-        data: {
-          problems: [],     //问卷问题
-          questionList: "",   //问卷信息
-          problem_options: [],  //问卷问题显示
-          problem_type : 0,   //添加问题type
-          showAddModel: false,  //添加问题model显示控制
-          notedata: null,
-          csrf_token: null,
+      router,
+      el: '#app',
+      delimiters: ["[[", "]]"],
+      data: {
+        problems: [],     //问卷问题
+        questionList: "",   //问卷信息
+        problem_options: [],  //问卷问题显示
+        problem_type : 0,   //添加问题type
+        showAddModel: false,  //添加问题model显示控制
+        showEditModel: false, //修改问题model显示控制
+        notedata: null,   //添加文本域
+        editProblem: "",  //修改问题信息
+        editOptions: "",  //修改问题选项信息
+        modelTitle: "问题录入", //model标题
+        commit_type: 'add', //提交类别
+      },
+
+      mounted: function () {
+        this.fetchData();
+      },
+
+      methods: {
+        //获取地址栏最后一位参数
+        get_path_end(){
+          var path = this.$route.path;
+          strs = path.split('/');
+          return strs[strs.length-2]
         },
 
+        // 获取问卷问题显示
+        fetchData() {
+          console.log(this.get_path_end())
 
-        mounted: function () {
-          this.fetchData();
+          axios.get('/vote/api/question_list_detail/'+ this.get_path_end() +'/').then(response => {
+            this.problems = response.data.problems;
+            this.questionList = response.data.questionList;
+            this.problem_options = response.data.problem_options;
+            console.log(this.problems);
+            console.log(this.questionList);
+            console.log(this.problem_options);
+          }), err => {
+            console.log(err);
+          };
         },
 
-        methods: {
-          // 获取问卷问题显示
-          fetchData() {
-            axios.get('/vote/api/question_list_detail/2/').then(response => {
-              this.problems = response.data.problems;
-              this.questionList = response.data.questionList;
-              this.problem_options = response.data.problem_options;
-              console.log(this.problems);
-              console.log(this.questionList);
-              console.log(this.problem_options);
-            }), err => {
-              console.log(err);
-            };
-          },
+        //获取csrf
+        get_csrf(){
+          axios.get('/vote/api/get_csrf/').then(response => {
+            this.csrf_token = response.data
+          }), err => {
+            console.log(err);
+          };
+        },
 
-          //获取csrf
-          get_csrf(){
-            axios.get('/vote/api/get_csrf/').then(response => {
-              this.csrf_token = response.data
-            }), err => {
-              console.log(err);
-            };
-          },
+        //添加问题显示
+        addShow: function(problem_type, event){
+          this.modelTitle = "问题录入";
+          this.problem_type = problem_type;
+          this.commit_type = 'add';
+          this.showAddModel = true;
+        },
 
-          //添加问题显示
-          addProblem: function(problem_type, event){
-            this.problem_type = problem_type;
-            this.showAddModel = true;
-          },
+        //修改问题显示
+        editShow: function(pid, problem_type, event){
+          this.modelTitle = "问题修改";
+          this.commit_type = 'edit';
+          axios.get('/vote/api/problem/' + pid + '/').then(response => {
+            console.log(response.data)
+            this.editProblem = response.data.problem;
+            this.editOptions = response.data.problem_options;
+          }), err => {
+            console.log(err);
+          };
+          this.showEditModel = true;
 
-          //closeAddModel
-          closeAddModel: function(event){
-            this.showAddModel = false;
-          },
+        },
 
-          
+        //closeAddModel
+        closeAddModel: function(event){
+          this.showAddModel = false;
+          this.showEditModel = false;
+        },
 
-          //提交问题
-          saveProblem: function(event){
-            this.showAddModel=false
-            console.log(this.notedata)
-            console.log(this.problem_type)
-            this.$http({
-              url: '/vote/api/problem/',
-              method: 'PUT',
-              // 请求体中发送的数据
-              data: {
-                notedata: this.notedata,
-                problem_type: this.problem_type,
-              },
-              // 设置请求头
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-              }    
-            }).then(function (data) {
-              // 成功回调
+        //提交
+        saveProblem: function(event){
+          if(this.commit_type == 'add'){
+            this.addCommit();
+          }else{
+            this.eidtCommit();
+          };
+        },
+
+        addCommit() {
+          if (this.notedata == null) {
+            alert('不能为空');
+            return -1
+          };
+          this.showAddModel = false;
+          console.log(this.notedata);
+          var data = {
+            notedata: this.notedata,
+            problem_type: this.problem_type,
+            qid: this.questionList.qid,
+          };
+          axios.put('/vote/api/problem/', qs.stringify(data))
+            .then(function (data) {
+              // 返回 Promise对象数据
               console.log(data)
-            }, function (data) {
-              // 失败回调
-              console.log(data)
+              this.notedata = null;
+              alert("添加成功");
+              location.reload();
+            })
+            .catch(error => {
+              // handle error
+              this.result.failureInfo = error;
             });
-          }
+        },
 
-        }
-      });
+        //问题修改提交
+        eidtCommit(){
+          this.showEditModel = false;
+          console.log(this.editOptions)
+          console.log(this.editProblem)
+          var data = {
+            123 : this.editOptions,
+            456 : this.editProblem,
+          }
+          axios.post('/vote/api/edit/problem/', qs.stringify(data))
+            .then(function (data) {
+              // 返回 Promise对象数据
+              console.log(data)
+              this.notedata = null;
+              alert("修改成功");
+              this.$route.go(0);
+            })
+            .catch(error => {
+              // handle error
+              this.result.failureInfo = error;
+            });
+        },
+
+        //问题删除提交
+        deleteProblem: function(pid, event){
+          var data = {
+            pid : pid
+          }
+          axios.delete('/vote/api/delete/problem/'+ pid +'', {data : data})
+          .then(function (data) {
+            // 返回 Promise对象数据
+            console.log(data)
+            alert("删除成功")
+            this.$route.go(0);
+            console.log(1);
+          })
+          .catch(error => {
+            // handle error
+            this.result.failureInfo = error;
+          });
+        },
+
+      }
+    });
 
 </script>
 </html>

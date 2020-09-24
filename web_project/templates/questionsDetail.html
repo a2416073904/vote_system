@@ -39,8 +39,12 @@
           <li class="problem">
             <h2 >[[problem.description]]</h2>
             <div class="options" v-for="(option,index) in problem_options[index]">
-              <input type="radio" class="option" v-bind:value="option.option"><span>[[option.option]]</span>
-            </div>
+              <input type="radio" v-if="problem.problem_type==0" v-bind:name="problem.pid" disabled='disabled' class="option" v-bind:value="option.oid">
+              <input type="checkbox" v-if="problem.problem_type==1" v-bind:name="problem.pid" disabled='disabled' class="option"
+                v-bind:value="option.oid">
+              <span v-if="problem.problem_type!=2">[[option.option]]</span>
+              <textarea v-if="problem.problem_type==2" disabled='disabled' v-bind:name="problem.pid" rows="10" cols="70" ></textarea>
+            </div>  
             <input type="button" v-on:click.stop="editShow(problem.pid, problem.problem_type)" class="btn btn-edit" value="编辑">
             <input type="button"  v-on:click.stop="deleteProblem(problem.pid)" class="btn btn-delete" value="删除">
           </li>
@@ -48,12 +52,13 @@
       </div>
     </div>
     <div class="add-model" v-show="showAddModel">
-      <h2>{{modelTitle}}：</h2>
-      <textarea class="problem-text pre-line" rows="25" cols="68" placeholder=
+      <h2>[[modelTitle]]：</h2>
+      <textarea v-if="problem_type!=2" class="problem-text pre-line" rows="25" cols="68" placeholder=
       "你喜欢的水果?
       苹果
       梨子
       香蕉" v-model="notedata"></textarea>
+      <textarea v-if="problem_type==2" class="problem-text pre-line" rows="25" cols="68" placeholder="你喜欢的水果有哪些？" v-model="notedata"></textarea>
       <div class="btns">
         <input type="button" v-on:click.stop="saveProblem()" value="保存">
         <input type="button" v-on:click.stop="closeAddModel()" value="关闭">
@@ -61,7 +66,7 @@
     </div>
 
     <div class="add-model" v-show="showEditModel">
-      <h2>{{modelTitle}}：</h2>
+      <h2>[[modelTitle]]：</h2>
       <div class="edit">
           <div>
             <span>问题描述：</span>
@@ -125,8 +130,6 @@
 
         // 获取问卷问题显示
         fetchData() {
-          console.log(this.get_path_end())
-
           axios.get('/vote/api/question_list_detail/'+ this.get_path_end() +'/').then(response => {
             this.problems = response.data.problems;
             this.questionList = response.data.questionList;
@@ -218,16 +221,19 @@
           console.log(this.editOptions)
           console.log(this.editProblem)
           var data = {
-            123 : this.editOptions,
-            456 : this.editProblem,
+            editOptions : JSON.stringify(this.editOptions),
+            editProblem : JSON.stringify(this.editProblem),
           }
-          axios.post('/vote/api/edit/problem/', qs.stringify(data))
+
+          //data = qs.stringify(data, { arrayFormat: 'indices', allowDots: true })
+          data = qs.stringify(data)
+          axios.post('/vote/api/edit/problem/', data)
             .then(function (data) {
               // 返回 Promise对象数据
               console.log(data)
               this.notedata = null;
               alert("修改成功");
-              this.$route.go(0);
+              location.reload();
             })
             .catch(error => {
               // handle error
@@ -243,10 +249,9 @@
           axios.delete('/vote/api/delete/problem/'+ pid +'', {data : data})
           .then(function (data) {
             // 返回 Promise对象数据
-            console.log(data)
-            alert("删除成功")
-            this.$route.go(0);
-            console.log(1);
+            console.log(data);
+            alert("删除成功");
+            location.reload();
           })
           .catch(error => {
             // handle error

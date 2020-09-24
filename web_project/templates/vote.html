@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote</title>
+
+  <link rel="stylesheet" href="/static/vote/css/detail.css">
+  <link rel="stylesheet" href="/static/vote/css/vote.css">
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qs/6.9.4/qs.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue-router/3.4.3/vue-router.min.js"></script>
+</head>
+<body>
+  <div id="app" class="container" class="vote">
+    <div class="question">
+      <div class="question_info">
+        <h2 class="questions-title">[[questionList.question_title]]</h2>
+      </div>
+      <div class="problems">
+        <form action="/vote/api/user_vote/" method="post">
+          <input type="hidden" name="qid" v-bind:value="questionList.qid">
+          <div class="problem-box" v-for="(problem,index) in problems">
+            <div class="problem">
+              <h2>[[problem.description]]</h2>
+              <div class="options" name='option' v-for="(option,index) in problem_options[index]">
+                <input type="radio" v-if="problem.problem_type==0" v-bind:name="problem.pid" class="option"
+                  v-bind:value="option.oid">
+                <input type="checkbox" v-if="problem.problem_type==1" v-bind:name="problem.pid"  class="option"
+                  v-bind:value="option.oid">
+                <span v-if="problem.problem_type!=2">[[option.option]]</span>
+                <textarea v-if="problem.problem_type==2" v-bind:name="problem.pid" rows="10" cols="70"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="opration">
+            <input type="submit" style="width: 100px; height: 40px; background-color: #ffffff;" value="提交">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var qs = Qs;
+      axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+      Vue.use(VueRouter)
+      const router = new VueRouter({
+        mode: "history", // 默认使用hash模式，url会出现#
+      });
+      var app = new Vue({
+        router,
+        el: '#app',
+        delimiters: ["[[", "]]"],
+        data: {
+          problems: [],     //问卷问题
+          questionList: "",   //问卷信息
+          problem_options: [],  //问卷问题显示
+        },
+
+        mounted: function () {
+          this.fetchData();
+        },
+
+        methods: {
+          //获取地址栏最后一位参数
+          get_path_end() {
+            var path = this.$route.path;
+            strs = path.split('/');
+            return strs[strs.length - 2]
+          },
+
+          // 获取问卷问题显示
+          fetchData() {
+            console.log(this.get_path_end())
+
+            axios.get('/vote/api/question_list_detail/' + this.get_path_end() + '/').then(response => {
+              this.problems = response.data.problems;
+              this.questionList = response.data.questionList;
+              this.problem_options = response.data.problem_options;
+              console.log(this.problems);
+              console.log(this.questionList);
+              console.log(this.problem_options);
+            }), err => {
+              console.log(err);
+            };
+          },
+
+        }
+      });
+  </script>
+</body>
+</html>

@@ -4,7 +4,9 @@ from . import views
 urlpatterns = [
     # page
     path('', views.index, name="index"),
-    path('qustions_detail/<qid>/', views.qustions_detail),
+    path('questions_detail/<qid>/', views.qustions_detail),
+    path('question_vote/<qid>/', views.question_vote),
+    path('success/', views.success),
 
 
     # CUAD
@@ -15,5 +17,5 @@ urlpatterns = [
     path('api/problem/', views.add_problem),
     path('api/edit/problem/', views.edit_problem),
     path('api/delete/problem/<pid>/', views.delete_problem),
-    path('api/user_vote/<pid>/<oid>/<content>/', views.user_vote),
+    path('api/user_vote/', views.user_vote),
 ]

@@ -26,6 +26,14 @@ def index(request):
 def qustions_detail(request, qid):
     return render(request, 'questionsDetail.html')
 
+# show vote page
+def question_vote(request, qid):
+    return render(request, 'vote.html')
+
+# show success page
+def success(request):
+    return render(request, 'success.html')
+
 
 # def get_csrf(request):
 #         #生成 csrf 数据，发送给前端
@@ -54,14 +62,16 @@ def question_list_detail(request, qid):
     for x in question_problems:
         p = models.Problem.objects.get(pid = x.problem.pid)
         tmep_list = p.option_set.all()
-        logger.info(tmep_list)
         temp_dict = {}
-        for o in tmep_list:
-            logger.info(o)
-            o.__dict__.pop("_state")
-            temp_dict["problem_option"+ str(o.oid)] = o.__dict__
+        if tmep_list is None or len(tmep_list) < 1:
+            temp_dict = {"problem_option-1": "无"}
+        else:  
+            for o in tmep_list:
+                logger.info(o)
+                o.__dict__.pop("_state")
+                temp_dict["problem_option" + str(o.oid)] = o.__dict__
+            
         problem_options.append(temp_dict)
-
         x.problem.__dict__.pop("_state")
         problems.append(x.problem.__dict__)
 
@@ -116,6 +126,9 @@ def add_problem(request):
         question_problem = models.QuestionProblem(problem=problem, question_list=models.QuestionList.objects.get(qid=qid))
         question_problem.save()
         
+        if problem.problem_type == 2:
+            return HttpResponse('问题：{0}\n添加成功'.format(problem.description))
+
         for i in range(1, len(problem_option)):
             if problem_option[i] != None and problem_option[i] != '':
                 option = models.Option(problem=problem, option=problem_option[i])
@@ -131,21 +144,22 @@ def edit_problem(request):
     if request.method != 'POST':
         return HttpResponse('403')
 
-    pid = request.POST.get("editProblem[pid]")
-    edit_options = request.POST.get('editOptions')
+    edit_problem = json.loads(request.POST.get("editProblem"))
+    logger.info(edit_problem)
+    edit_options = json.loads(request.POST.get('editOptions'))
 
-    problem = models.Problem.objects.get(pid=pid)
-    problem.description = request.POST.get("editProblem[description]")
+    problem = models.Problem.objects.get(pid=edit_problem['pid'])
+    problem.description = edit_problem['description']
     
     problem.save()
 
     count = 0
     for x in edit_options:
-        option = models.Option.objects.get(oid=x.oid)
-        if x.option == None or x.option == "":
+        option = models.Option.objects.get(oid=x['oid'])
+        if x['option'] == None or x['option'] == "":
             option.delete
         else:
-            option.option = x.option
+            option.option = x['option']
             option.save()
         count += 1
 
@@ -165,15 +179,29 @@ def delete_problem(request, pid):
 
 # vote 
 def user_vote(request):
-    if request.method == 'PUT':
-        pid = request.POST.get('pid')
-        oid = request.POST.get('oid')
-        content = request.POST.get('content')
-    
-    uid = str(uuid.uuid4())
-    suid = ''.join(uid.split('-'))
-    vote = models.Vote(uid = suid, problem_vfield = models.Problem.objects.get(pid = pid), option_vfield = models.Option.objects.get(oid = oid), content = content)
-    vote.save()
+    if request.method != 'POST':
+        return HttpResponse('403')
 
-    return HttpResponse('{0}投票问题{1}成功'.format(suid, pid))
+    data = request.POST.copy()
+
+    question_list = models.QuestionList.objects.get(qid=data.get('qid'))
+    question_list.answer_num += 1
+    question_list.save()
+
+    data.pop('qid')
+
+    for k,v in data.lists():
+        logger.info("{0} : {1}".format(k, v))
+        uid = str(uuid.uuid4())
+        suid = ''.join(uid.split('-'))
+        problem = models.Problem.objects.get(pid=int(k))
+        for x in v:
+            if problem.problem_type != 2:
+                vote = models.Vote(uid=suid, problem= problem, option=models.Option.objects.get(oid=int(x)))
+                vote.save()
+            else:
+                vote = models.Vote(uid=suid, problem= problem, content= x)
+                vote.save()
+    
+    return render(request, 'success.html')
 
